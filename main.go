@@ -6,6 +6,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/gookit/color"
 	"github.com/olekukonko/tablewriter"
+	"github.com/spf13/viper"
+	"gopkg.in/ini.v1"
 	"io/ioutil"
 	"moocVip/util"
 	"os"
@@ -17,7 +19,8 @@ import (
 //go build -o main.exe
 func main() {
 	Init()
-	cookieStr := ReadCookie()
+	//cookieStr := ReadCookie()
+	cookieStr := viper.GetString("info.cookie")
 	CookieMap := util.CookieToMap(cookieStr)
 	token := CookieMap["NTESSTUDYSI"]
 	NETEASE_WDA_UID := CookieMap["NETEASE_WDA_UID"]
@@ -36,28 +39,51 @@ func main() {
 }
 
 func Init() {
+	Config()
 	Table()
 	basePath, _ := os.Getwd()
 	Path := fmt.Sprintf("%s\\%s", basePath, "download")
 	util.PathExists(Path)
 }
 
-func ReadCookie() string {
-	basePath, _ := os.Getwd()
-	cookiePath := fmt.Sprintf("%s\\cookie.txt", basePath)
-	data, err := ioutil.ReadFile(cookiePath)
+func Config() {
+	_, err := os.Stat(".\\conf.ini")
 	if err != nil {
-		os.Create(cookiePath)
-		color.Red.Println("\n请把你的cookie复制到cookie.txt文件中并重新运行本程序!")
-		time.Sleep(5 * time.Second)
+		cfg := ini.Empty()
+		DefaultSection := cfg.Section("Info")
+		NameSection, _ := DefaultSection.NewKey("Name", "moocVip")
+		NameSection.Comment = "# 名字"
+
+		VersionSection, _ := DefaultSection.NewKey("Version", "2.7")
+		VersionSection.Comment = "# 版本号"
+
+		UserNameSection, _ := DefaultSection.NewKey("User", "123456")
+		UserNameSection.Comment = "# 账号"
+
+		PwdSection, _ := DefaultSection.NewKey("Pwd", "123456")
+		PwdSection.Comment = "# 密码"
+
+		CookieSection, _ := DefaultSection.NewKey("Cookie", "自己账号cookie")
+		CookieSection.Comment = "# cookie"
+
+		PathSection := cfg.Section("Path")
+		PathSection.Comment = "# 路径"
+
+		downloadSection, _ := PathSection.NewKey("SavePath", "download")
+		downloadSection.Comment = "# 保存路径"
+
+		cfg.SaveTo("conf.ini")
+		color.Green.Println("请到 conf.ini 配置你的信息")
+		color.Red.Println(`注意cookie形式为 """自己的cookie""" ,一定要在这6个英文引号里面`)
+		time.Sleep(4 * time.Second)
 		syscall.Exit(0)
 	}
-	if len(data) == 0 {
-		color.Green.Println("\ncookie.txt文件中没有cookie,请您粘贴cookie并重新运行本程序!")
-		time.Sleep(5 * time.Second)
-		syscall.Exit(0)
-	}
-	return string(data)
+	viper.AddConfigPath(".\\")
+	viper.SetConfigName("conf")
+	viper.SetConfigType("ini")
+	viper.WatchConfig()
+	viper.ReadInConfig()
+	//fmt.Println(viper.AllSettings())
 }
 
 //检查当前cookie状态
@@ -93,7 +119,7 @@ func Table() {
 	data := [][]string{
 		[]string{"慕", "", "", ""},
 		[]string{"课", "", "", ""},
-		[]string{"下", "Esword", "Spiders and AI", "https://github.com/Esword618/moocVip"},
+		[]string{"下", "Esword", "Spiders and AI", "https://github.com/Esword618/MOOC"},
 		[]string{"载", "", "", ""},
 		[]string{"器", "", "", ""},
 	}
@@ -128,6 +154,24 @@ func Table() {
 
 	table.AppendBulk(data)
 	table.Render()
+}
+
+func ReadCookie() string {
+	basePath, _ := os.Getwd()
+	cookiePath := fmt.Sprintf("%s\\cookie.txt", basePath)
+	data, err := ioutil.ReadFile(cookiePath)
+	if err != nil {
+		os.Create(cookiePath)
+		color.Red.Println("\n请把你的cookie复制到cookie.txt文件中并重新运行本程序!")
+		time.Sleep(5 * time.Second)
+		syscall.Exit(0)
+	}
+	if len(data) == 0 {
+		color.Green.Println("\ncookie.txt文件中没有cookie,请您粘贴cookie并重新运行本程序!")
+		time.Sleep(5 * time.Second)
+		syscall.Exit(0)
+	}
+	return string(data)
 }
 
 func GetLastLearnedMocTermDto(cookieStr string, token string, tid string) string {
