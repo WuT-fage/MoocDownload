@@ -3,7 +3,9 @@ package util
 import (
 	"encoding/base64"
 	"fmt"
+	"net/http"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -63,4 +65,27 @@ func CookieToMap(CookieStr string) map[string]string {
 	return CookieMap
 	//cmp := regexp.MustCompile("; ")
 	//fmt.Println(cmp.FindAllString(CookieStr, -1))
+}
+
+func RemoveInvalidChar(oldStr string) string {
+	cmp := regexp.MustCompile("]|\\[|：|:|\\*|\\?|\t|\\x0b|")
+	newStr := cmp.ReplaceAllString(oldStr, "")
+	return newStr
+}
+
+func HttpCookieToMap(httpCookie []*http.Cookie) map[string]string {
+	CookieMap := make(map[string]string)
+	for _, cookie := range httpCookie {
+		CookieMap[cookie.Name] = cookie.Value
+	}
+	return CookieMap
+}
+
+func CookieMapTOStr(CookieMap map[string]string) string {
+	var CookieStr string
+	for key, value := range CookieMap {
+		CookieStr += key + "=" + value + "; "
+	}
+	fmt.Println(CookieStr)
+	return CookieStr[:len(CookieStr)-2]
 }
