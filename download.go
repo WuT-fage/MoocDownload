@@ -16,8 +16,8 @@ func Download(InfoStruct util.MyMocTermDto, cookieStr string, token string) {
 	courseNamePath := fmt.Sprintf("%s\\download\\%s", basePath, courseName)
 	util.PathExists(courseNamePath)
 	videoBool := viper.GetInt("download.video")
-	courseqareBool := viper.GetInt("download.courseqare")
-	paperBool := viper.GetInt("download.courseqare")
+	coursewareBool := viper.GetInt("download.courseware")
+	paperBool := viper.GetInt("download.paper")
 	for _, chapter := range InfoStruct.Chapters {
 		chapterName := chapter.ChapterName
 		chapterName = util.RemoveInvalidChar(chapterName)
@@ -40,7 +40,7 @@ func Download(InfoStruct util.MyMocTermDto, cookieStr string, token string) {
 				}
 
 			case 3:
-				if courseqareBool == 1 {
+				if coursewareBool == 1 {
 					path := fmt.Sprintf("%s\\%s.pdf", chapterNamePath, unitName)
 					_, err := os.Stat(path)
 					if err != nil {
