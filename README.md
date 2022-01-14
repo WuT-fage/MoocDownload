@@ -1,4 +1,4 @@
-# moocVip
+# moocVip（一个不要你付费的vip）
 ## 慕课下载器（慕课平台付费课程下载）
 
 
@@ -13,6 +13,8 @@
 
 望大家遵守规则。
 
+同时现在本项目也支持公开课的下载，包括视频以及课件。
+
 
 
 ## 唠嗑
@@ -20,10 +22,4 @@
 本项目是本人在之前用`python`构造的基础上用`go`语言搭建，与之前的项目，在下载速度与稳定性来说都提升了好几个档次。这个是本人第一次完完整整用`go`搭建的第一个项目，有许多不足之处望担待，咱们不喜就喷。哈哈哈哈
 
 
-
-## 请我喝茶
-
-<img src="https://github.com/Ajian-jyj/Ajian-jyj/blob/main/data/vx.jpg" width="480" height="600" alt="微信"/><br/>
-
-<img src="https://github.com/Ajian-jyj/Ajian-jyj/blob/main/data/zfb.png" width="480" height="600" alt="支付宝"/><br/>
 
