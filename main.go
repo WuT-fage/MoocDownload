@@ -31,6 +31,7 @@ func main() {
 func Init() (string, string) {
 	Config()
 	Table()
+	color.Red.Println("\n请注意：如果你要下载测验及其答案请找作者\n")
 	basePath, _ := os.Getwd()
 	Path := fmt.Sprintf("%s\\%s", basePath, "download")
 	util.PathExists(Path)
@@ -58,17 +59,11 @@ func Config() {
 	if err != nil {
 		cfg := ini.Empty()
 		DefaultSection := cfg.Section("Info")
-		NameSection, _ := DefaultSection.NewKey("Name", "moocVip")
+		NameSection, _ := DefaultSection.NewKey("Name", "慕课下载器")
 		NameSection.Comment = "# 名字"
 
-		VersionSection, _ := DefaultSection.NewKey("Version", "2.8")
+		VersionSection, _ := DefaultSection.NewKey("Version", "3.0")
 		VersionSection.Comment = "# 版本号"
-
-		UserNameSection, _ := DefaultSection.NewKey("User", "123456")
-		UserNameSection.Comment = "# 账号"
-
-		PwdSection, _ := DefaultSection.NewKey("Pwd", "123456")
-		PwdSection.Comment = "# 密码"
 
 		PathSection := cfg.Section("Path")
 		PathSection.Comment = "# 路径"
@@ -76,8 +71,18 @@ func Config() {
 		downloadSection, _ := PathSection.NewKey("SavePath", "download")
 		downloadSection.Comment = "# 保存路径"
 
+		judgeSection := cfg.Section("Download")
+		judgeSection.Comment = "# 下载为1，不下载为0"
+		videoSection, _ := judgeSection.NewKey("Video", "1")
+		videoSection.Comment = "# 是否下载视频"
+
+		coursewareSection, _ := judgeSection.NewKey("Courseware", "1")
+		coursewareSection.Comment = "# 是否下载资料"
+
+		paperSection, _ := judgeSection.NewKey("Paper", "1")
+		paperSection.Comment = "# 是否下载试卷(暂时不支持)"
+
 		cfg.SaveTo("conf.ini")
-		color.Green.Println("如果你要账号密码登录 请到 conf.ini 配置你的信息")
 	}
 	viper.AddConfigPath(".\\")
 	viper.SetConfigName("conf")

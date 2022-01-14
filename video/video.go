@@ -13,11 +13,13 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
 
-func Video(TsList []string, key string, unitName string, chapterNamePath string) {
+//付费视频
+func VipVideo(TsList []string, key string, unitName string, chapterNamePath string) {
 	temPath := fmt.Sprintf("%s\\tem", chapterNamePath)
 	util.PathExists(temPath)
 	var wg sync.WaitGroup
@@ -45,7 +47,48 @@ func Video(TsList []string, key string, unitName string, chapterNamePath string)
 
 	for index, TsUrl := range TsList {
 		wg.Add(1)
-		_ = pool.Submit(DecryptTs(chapterNamePath, TsUrl, key, index, &wg))
+		_ = pool.Submit(VipDecryptTs(chapterNamePath, TsUrl, key, index, &wg))
+		bar.Increment()
+	}
+	barP.Wait()
+	wg.Wait()
+	MergeTs(len(TsList), unitName, chapterNamePath)
+	err := os.RemoveAll(temPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+//公开课视频
+func FreeVideo(TsList []string, unitName string, chapterNamePath string) {
+	temPath := fmt.Sprintf("%s\\tem", chapterNamePath)
+	util.PathExists(temPath)
+	var wg sync.WaitGroup
+	pool, _ := ants.NewPool(5)
+	defer pool.Release()
+
+	barP := mpb.New(mpb.WithWidth(64))
+
+	total := len(TsList)
+	name := fmt.Sprintf("%s.mp4 :", unitName)
+	// create a single bar, which will inherit container's width
+	bar := barP.New(int64(total),
+		// BarFillerBuilder with custom style
+		mpb.BarStyle().Lbound("╢").Filler("▌").Tip("▌").Padding("░").Rbound("╟"),
+		mpb.PrependDecorators(
+			// display our name with one space on the right
+			decor.Name(name, decor.WC{W: len(name), C: decor.DidentRight}),
+			// replace ETA decorator with "done" message, OnComplete event
+			decor.OnComplete(
+				decor.AverageETA(decor.ET_STYLE_GO, decor.WC{W: 4}), "done",
+			),
+		),
+		mpb.AppendDecorators(decor.Percentage()),
+	)
+
+	for index, TsUrl := range TsList {
+		wg.Add(1)
+		_ = pool.Submit(FreeTs(chapterNamePath, TsUrl, index, &wg))
 		bar.Increment()
 	}
 	barP.Wait()
@@ -113,7 +156,7 @@ func GetSignatureVideoId(UnitId int, cookieStr string, token string) (int, strin
 	return videoId, signature
 }
 
-func GetTsKey(encryptStr string, videoId int) ([]string, string) {
+func VipGetTsKey(encryptStr string, videoId int) ([]string, string) {
 	videoId_ := strconv.Itoa(videoId)
 	m3u8 := js.M3u8(encryptStr, videoId_)
 	tsCmp := regexp.MustCompile("http.*?ts")
@@ -135,6 +178,13 @@ func GetTsKey(encryptStr string, videoId int) ([]string, string) {
 	return tsList, key
 }
 
+func FreeGetTs(M3u8Str string) []string {
+	tsCmp := regexp.MustCompile("\\d+.*?ts")
+	//获取ts列表
+	tsList := tsCmp.FindAllString(M3u8Str, -1)
+	return tsList
+}
+
 func Download(UnitId int, token string, cookieStr string, unitName string, chapterNamePath string) {
 	videoId, signature := GetSignatureVideoId(UnitId, cookieStr, token)
 	client := resty.New()
@@ -152,6 +202,7 @@ func Download(UnitId int, token string, cookieStr string, unitName string, chapt
 	var quality int
 	var videoUrl string
 	var k string
+	var secondaryEncrypt bool
 	for _, video := range VodVideoStruct.Result.Videos {
 		quality_ := video.Quality
 		if quality_ >= quality {
@@ -159,12 +210,30 @@ func Download(UnitId int, token string, cookieStr string, unitName string, chapt
 		}
 		videoUrl = video.VideoURL
 		k = video.K
+		secondaryEncrypt = video.SecondaryEncrypt
 	}
-	videoToken := js.Token(k)
-	res, _ = client.R().SetQueryParams(map[string]string{
-		"token": videoToken,
-		"t":     strconv.FormatInt(time.Now().UnixMilli(), 10),
-	}).Get(videoUrl)
-	tsList, key := GetTsKey(res.String(), videoId)
-	Video(tsList, key, unitName, chapterNamePath)
+	if secondaryEncrypt {
+		videoToken := js.Token(k)
+		res, _ = client.R().SetQueryParams(map[string]string{
+			"token": videoToken,
+			"t":     strconv.FormatInt(time.Now().UnixMilli(), 10),
+		}).Get(videoUrl)
+		tsList, key := VipGetTsKey(res.String(), videoId)
+		VipVideo(tsList, key, unitName, chapterNamePath)
+	} else {
+		var baseUrl string
+		res, _ = client.R().Get(videoUrl)
+		if strings.Contains(videoUrl, "https") {
+			baseUrl = videoUrl[:48]
+		} else {
+			baseUrl = videoUrl[:47]
+			baseUrl = strings.Replace(baseUrl, "http", "https", -1)
+		}
+		tsList := FreeGetTs(res.String())
+		for i, j := range tsList {
+			tsList[i] = baseUrl + j
+		}
+		FreeVideo(tsList, unitName, chapterNamePath)
+	}
+
 }
