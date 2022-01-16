@@ -68,8 +68,9 @@ func CookieToMap(CookieStr string) map[string]string {
 }
 
 func RemoveInvalidChar(oldStr string) string {
-	cmp := regexp.MustCompile("]|\\[|：|:|\\*|\\?|\t|\\x0b|")
+	cmp := regexp.MustCompile("]|\\[|：|:|\\*|\\?|\t|\\x0b|/|")
 	newStr := cmp.ReplaceAllString(oldStr, "")
+	newStr = strings.Replace(newStr, "/", "", -1)
 	return newStr
 }
 
