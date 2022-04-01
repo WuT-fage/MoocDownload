@@ -1,4 +1,4 @@
-package util
+package model
 
 type Status struct {
 	Code   int `json:"code"`
@@ -35,7 +35,7 @@ type Status struct {
 	Sampled bool   `json:"sampled"`
 }
 
-//---------------------
+// ---------------------
 type VodVideo struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -66,7 +66,7 @@ type VodVideo struct {
 	UUID interface{} `json:"uuid"`
 }
 
-//-------------------------------------
+// -------------------------------------
 type Video struct {
 	Code    int         `json:"code"`
 	Result  VideoResult `json:"result"`
@@ -93,7 +93,7 @@ type VideoResult struct {
 	ContentType    int          `json:"contentType"`
 }
 
-//-------------------------------------
+// -------------------------------------
 type MyMocTermDto struct {
 	CourseName string
 	Chapters   []MyChapter
@@ -112,7 +112,7 @@ type MyUnit struct {
 	UnitId      int
 }
 
-//---------------------------------------
+// ---------------------------------------
 type LastLearnedMocTermDto struct {
 	Code    int    `json:"code"`
 	Result  Result `json:"result"`

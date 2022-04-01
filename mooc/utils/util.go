@@ -1,26 +1,18 @@
-package util
+package utils
 
 import (
-	"encoding/base64"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
+	"time"
+
+	"github.com/gookit/color"
 )
-
-func Bs64Decode(Str string) string {
-	resBytes, err := base64.StdEncoding.DecodeString(Str)
-	if err != nil {
-		panic("bs64无法解码")
-	}
-	return string(resBytes)
-}
-
-func Bs64Encode(Str string) string {
-	return base64.StdEncoding.EncodeToString([]byte(Str))
-}
 
 func Iv(index int) []byte {
 	indexStr := strconv.Itoa(index)
@@ -36,7 +28,7 @@ func Iv(index int) []byte {
 	return iv
 }
 
-//PathExists 判断文件夹是否存在
+// PathExists 判断文件夹是否存在
 func PathExists(path string) (bool, error) {
 	_, err := os.Stat(path)
 	if err == nil {
@@ -54,6 +46,49 @@ func PathExists(path string) (bool, error) {
 	return false, err
 }
 
+func ReadCookie() string {
+	basePath, _ := os.Getwd()
+	cookiePath := fmt.Sprintf("%s\\cookie.txt", basePath)
+	_, err := os.Stat(cookiePath)
+	if err != nil {
+		os.Create(cookiePath)
+	}
+	data, err := ioutil.ReadFile(cookiePath)
+	if err != nil || len(data) == 0 {
+		os.Create(cookiePath)
+		color.Red.Println("\n请把你的cookie复制到cookie.txt文件中并重新运行本程序!")
+		time.Sleep(5 * time.Second)
+		syscall.Exit(0)
+
+	}
+	if len(data) == 0 {
+		color.Green.Println("\n检测到cookie.txt文件中没有cookie,请您粘贴cookie并重新运行本程序!")
+		time.Sleep(5 * time.Second)
+		syscall.Exit(0)
+	}
+	return string(data)
+}
+
+func SaveCookie() string {
+	color.Green.Printf("请把cookie复制到此处:")
+	basePath, _ := os.Getwd()
+	var cookieStr string
+	fmt.Scanln(&cookieStr)
+	for len(cookieStr) == 0 {
+		color.Red.Printf("请把cookie复制到此处:")
+		fmt.Scanln(&cookieStr)
+	}
+	cookiePath := fmt.Sprintf("%s\\cookie.txt", basePath)
+	f, err := os.OpenFile(cookiePath, os.O_RDWR|os.O_TRUNC, 0600)
+	defer f.Close()
+	if err != nil {
+		panic(err)
+	} else {
+		_, err = f.Write([]byte(cookieStr))
+	}
+	return cookieStr
+}
+
 func CookieToMap(CookieStr string) map[string]string {
 	CookieMap := make(map[string]string)
 	CookieList := strings.Split(CookieStr, "; ")
@@ -61,10 +96,10 @@ func CookieToMap(CookieStr string) map[string]string {
 		iList := strings.Split(i, "=")
 		CookieMap[iList[0]] = iList[1]
 	}
-	//fmt.Println(CookieMap)
+	// fmt.Println(CookieMap)
 	return CookieMap
-	//cmp := regexp.MustCompile("; ")
-	//fmt.Println(cmp.FindAllString(CookieStr, -1))
+	// cmp := regexp.MustCompile("; ")
+	// fmt.Println(cmp.FindAllString(CookieStr, -1))
 }
 
 func RemoveInvalidChar(oldStr string) string {

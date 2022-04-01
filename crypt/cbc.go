@@ -1,4 +1,4 @@
-package video
+package crypt
 
 import (
 	"bytes"
@@ -39,12 +39,12 @@ func CBCDecrypter(encrypter []byte, key []byte, iv []byte) []byte {
 	if err != nil {
 		fmt.Println(err)
 	}
-	//blockSize := block.BlockSize()
+	// blockSize := block.BlockSize()
 	blockMode := cipher.NewCBCDecrypter(block, iv)
 	result := make([]byte, len(encrypter))
 	blockMode.CryptBlocks(result, encrypter)
 	// 去除填充
-	//result = UnPKCS7Padding(result)
+	// result = UnPKCS7Padding(result)
 	return result
 }
 
